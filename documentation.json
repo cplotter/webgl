@@ -1,0 +1,526 @@
+[
+  {
+    "name": "WebGL.Texture",
+    "comment": " # Types\n@docs Texture, TextureFilter, Error\n\n# Loading Textures\n@docs load, loadWith, size\n",
+    "aliases": [
+      {
+        "name": "Texture",
+        "comment": " Textures can be passed in `uniforms`, and used in the fragment shader.\nYou can created a texture with `load` or `loadWith`.\n",
+        "args": [],
+        "type": "WebGL.Texture"
+      }
+    ],
+    "types": [
+      {
+        "name": "Error",
+        "comment": " An error which occurred while loading a texture.\n",
+        "args": [],
+        "cases": []
+      },
+      {
+        "name": "TextureFilter",
+        "comment": " Textures work in two ways when looking up a pixel value: Linear or Nearest.\n",
+        "args": [],
+        "cases": [
+          [
+            "Linear",
+            []
+          ],
+          [
+            "Nearest",
+            []
+          ]
+        ]
+      }
+    ],
+    "values": [
+      {
+        "name": "load",
+        "comment": " Loads a texture from the given url with Linear filtering.\nPNG and JPEG are known to work, but other formats have not been as\nwell-tested yet.\n",
+        "type": "String -> Task.Task WebGL.Texture.Error WebGL.Texture.Texture"
+      },
+      {
+        "name": "loadWith",
+        "comment": " Loads a texture from the given url. PNG and JPEG are known to work, but\nother formats have not been as well-tested yet. Configurable filter.\n",
+        "type": "WebGL.Texture.TextureFilter -> String -> Task.Task WebGL.Texture.Error WebGL.Texture.Texture"
+      },
+      {
+        "name": "size",
+        "comment": " Return the (width, height) size of a texture. Useful for sprite sheets\nor other times you may want to use only a potion of a texture image.\n",
+        "type": "WebGL.Texture.Texture -> ( Int, Int )"
+      }
+    ],
+    "generated-with-elm-version": "0.18.0"
+  },
+  {
+    "name": "WebGL",
+    "comment": " The WebGL API is for high performance rendering. Definitely read about\n[how WebGL works](https://github.com/elm-community/webgl/blob/master/README.md)\nand look at some examples before trying to do too much with just the\ndocumentation provided here.\n\n# Mesh\n@docs Drawable, triangles\n\nPlease find other kinds of drawables in the [corresponding section](#drawables).\n\n# Shaders\n@docs Shader, Texture\n\n# Renderables\n@docs Renderable, render\n\n# WebGL Html\n@docs toHtml\n\n# Advanced Usage\n@docs renderWith, toHtmlWith\n\n# Other Drawables\n@docs indexedTriangles, lines, lineStrip, lineLoop, points, triangleFan,\n      triangleStrip\n\n# Unsafe Shader Creation (for library writers)\n@docs unsafeShader\n",
+    "aliases": [],
+    "types": [
+      {
+        "name": "Drawable",
+        "comment": " Defines the mesh by forming geometry from the specified vertices.\nEach vertex contains a bunch of attributes, that should be defined as\na custom record type, e.g.:\n\n```\ntype alias Attributes =\n    { position : Vec3\n    , color : Vec3\n    }\n```\n\nThe supported types in attributes are: `Int`, `Float`, `WebGL.Texture`\nand `Vec2`, `Vec3`, `Vec4`, `Mat4` from the\n[linear-algebra](http://package.elm-lang.org/packages/elm-community/linear-algebra/latest)\npackage.\n",
+        "args": [
+          "attributes"
+        ],
+        "cases": []
+      },
+      {
+        "name": "Renderable",
+        "comment": " Conceptually, an encapsulation of the instructions to render something.\n",
+        "args": [],
+        "cases": []
+      },
+      {
+        "name": "Shader",
+        "comment": " Shaders are programs for running many computations on the GPU in parallel.\nThey are written in a language called\n[GLSL](http://en.wikipedia.org/wiki/OpenGL_Shading_Language). Read more about\nshaders [here](https://github.com/elm-community/webgl/blob/master/README.md).\n\nNormally you specify a shader with a `glsl[| |]` block. This is because shaders\nmust be compiled before they are used, imposing an overhead that is best\navoided in general.\n\n* `attributes` is a record type that defines [vertices in the mesh](#mesh);\n* `uniforms` is a record type where you may pass custom parameters like\n  transformation matrix, texture, screen size, etc.;\n* `varyings` is a record type that defines the output from the shader.\n\nElm compiler will parse the shader code block and derive the type\nsignature for your shader.\n",
+        "args": [
+          "attributes",
+          "uniforms",
+          "varyings"
+        ],
+        "cases": []
+      },
+      {
+        "name": "Texture",
+        "comment": " Use Texture to pass the sampler2D uniform value to the shader. Please\nfind more about textures in `WebGL.Texture`.\n",
+        "args": [],
+        "cases": []
+      }
+    ],
+    "values": [
+      {
+        "name": "indexedTriangles",
+        "comment": " IndexedTriangles is a special mode in which you provide a list of attributes\nthat describe the vertices and and a list of indices, that are grouped in sets\nof three that refer to the vertices that form each triangle.\n",
+        "type": "List attributes -> List ( Int, Int, Int ) -> WebGL.Drawable attributes"
+      },
+      {
+        "name": "lineLoop",
+        "comment": " Similar to `lineStrip`, but connects the last vertex back to the first.\n",
+        "type": "List attributes -> WebGL.Drawable attributes"
+      },
+      {
+        "name": "lineStrip",
+        "comment": " Connects each two subsequent vertices in the list with a line.\n",
+        "type": "List attributes -> WebGL.Drawable attributes"
+      },
+      {
+        "name": "lines",
+        "comment": " Connects each pair of vertices with a line.\n",
+        "type": "List ( attributes, attributes ) -> WebGL.Drawable attributes"
+      },
+      {
+        "name": "points",
+        "comment": " Draws a single dot per vertex.\n",
+        "type": "List attributes -> WebGL.Drawable attributes"
+      },
+      {
+        "name": "render",
+        "comment": " Packages a vertex shader, a fragment shader, a mesh, and uniforms\nas a `Renderable`. This specifies a full rendering pipeline to be run\non the GPU. You can read more about the pipeline\n[here](https://github.com/elm-community/webgl/blob/master/README.md).\n\nValues will be cached intelligently, so if you have already sent a shader or\nmesh to the GPU, it will not be resent. This means it is fairly cheap to create\nnew renderables if you are reusing shaders and meshes that have been used\nbefore.\n\nBy default, depth test setting is enabled for you. If you need more settings,\nlike stencil test, blending, etc., then check `renderWith`.\n",
+        "type": "WebGL.Shader attributes uniforms varyings -> WebGL.Shader {} uniforms varyings -> WebGL.Drawable attributes -> uniforms -> WebGL.Renderable"
+      },
+      {
+        "name": "renderWith",
+        "comment": " The same as `render`, but allows to configure a renderable with a list\nof settings. Check `WebGL.Settings` for the possible values.\n",
+        "type": "List WebGL.Settings.Setting -> WebGL.Shader attributes uniforms varyings -> WebGL.Shader {} uniforms varyings -> WebGL.Drawable attributes -> uniforms -> WebGL.Renderable"
+      },
+      {
+        "name": "toHtml",
+        "comment": " Render a WebGL scene with the given options, html attributes, and\nrenderables.\n\nShaders and meshes are cached so that they do not get resent to the GPU,\nso it should be relatively cheap to create new renderables out of existing\nvalues.\n\nBy default, alpha channel with premultiplied alpha, antialias and depth buffer\noptions are enabled. If you need more options, please check `toHtmlWith`.\n",
+        "type": "List (Html.Attribute msg) -> List WebGL.Renderable -> Html.Html msg"
+      },
+      {
+        "name": "toHtmlWith",
+        "comment": " Render a WebGL scene with the given list of options,\nhtml attributes, and renderables.\n\nPlease note that due to browser limitations, options will be applied only once\nwhen the canvas is created for the first time.\n\nCheck `WebGL.Options` for all possible options.\n",
+        "type": "List WebGL.Options.Option -> List (Html.Attribute msg) -> List WebGL.Renderable -> Html.Html msg"
+      },
+      {
+        "name": "triangleFan",
+        "comment": " Similar to `triangleStrip`, but creates a fan shaped output.\n",
+        "type": "List attributes -> WebGL.Drawable attributes"
+      },
+      {
+        "name": "triangleStrip",
+        "comment": " Creates a strip of triangles where each additional vertex creates an\nadditional triangle once the first three vertices have been drawn.\n",
+        "type": "List attributes -> WebGL.Drawable attributes"
+      },
+      {
+        "name": "triangles",
+        "comment": " Triangles are the basic building blocks of a mesh. You can put them together\nto form any shape.\n\nSo when you create `triangles` you are really providing three sets of attributes\nthat describe the corners of each triangle.\n",
+        "type": "List ( attributes, attributes, attributes ) -> WebGL.Drawable attributes"
+      },
+      {
+        "name": "unsafeShader",
+        "comment": " Creates a shader with a raw string of GLSL. It is intended specifically\nfor library writers, who want to create shader combinators.\n",
+        "type": "String -> WebGL.Shader attributes uniforms varyings"
+      }
+    ],
+    "generated-with-elm-version": "0.18.0"
+  },
+  {
+    "name": "WebGL.Options",
+    "comment": " # Options\n@docs Option, alpha, depth, stencil, antialias, clearColor\n",
+    "aliases": [],
+    "types": [
+      {
+        "name": "Option",
+        "comment": " Provides a typesafe way to configure WebGLContext and the scene behavior\nin `WebGL.toHtmlWith`.\n",
+        "args": [],
+        "cases": []
+      }
+    ],
+    "values": [
+      {
+        "name": "alpha",
+        "comment": " Enable alpha channel in the drawing buffer. If the argument is `True`, then\nthe page compositor will assume the drawing buffer contains colors with\npremultiplied alpha.\n\n`alpha True` is enabled by default when you use `WebGL.toHtml`.\n",
+        "type": "Bool -> WebGL.Options.Option"
+      },
+      {
+        "name": "antialias",
+        "comment": " Enable antialiasing of the drawing buffer, if supported by the browser.\nUseful when you want to preserve sharp edges when resizing the canvas.\n\n`antialias` is enabled by default when you use `WebGL.toHtml`.\n",
+        "type": "WebGL.Options.Option"
+      },
+      {
+        "name": "clearColor",
+        "comment": " Set the red, green, blue and alpha channels, that will be used to\nfill the drawing buffer every time before drawing the scene. The values are\nclamped between 0 and 1. The default is all 0's.\n",
+        "type": "Float -> Float -> Float -> Float -> WebGL.Options.Option"
+      },
+      {
+        "name": "depth",
+        "comment": " Enable the depth buffer, and prefill it with given value each time before\nthe scene is rendered. The value is clamped between 0 and 1.\n\n`depth 1` is enabled by default when you use `WebGL.toHtml`.\n",
+        "type": "Float -> WebGL.Options.Option"
+      },
+      {
+        "name": "stencil",
+        "comment": " Enable the stencil buffer, specifying the index used to fill the\nstencil buffer before we render the scene. The index is masked with 2^m - 1,\nwhere m >= 8 is the number of bits in the stencil buffer. The default is 0.\n",
+        "type": "Int -> WebGL.Options.Option"
+      }
+    ],
+    "generated-with-elm-version": "0.18.0"
+  },
+  {
+    "name": "WebGL.Settings",
+    "comment": " # Settings\n\n@docs Setting\n\n# Blending\n\n@docs blend, blendSeparate, BlendOptions, blendOptions\n\n## Blend Factors\n\n@docs BlendFactor, zero, one, srcColor, oneMinusSrcColor, dstColor,\n      oneMinusDstColor, srcAlpha, oneMinusSrcAlpha, dstAlpha, oneMinusDstAlpha,\n      constantColor, oneMinusConstantColor, constantAlpha,\n      oneMinusConstantAlpha, srcAlphaSaturate\n\n## Blend Equations\n\n@docs BlendEquation, add, subtract, reverseSubtract\n\n# Depth Test\n\n@docs depth, DepthOptions, depthOptions\n\n## Compare Modes\n\n@docs CompareMode, never, always, less, lessOrEqual, equal, greaterOrEqual,\n      greater, notEqual\n\n# Stencil Test\n\nIn order to use this setting, `Options.stencil` has to be used in `toHtmlWith`.\n\n@docs stencil, StencilOptions, stencilOptions, stencilSeparate\n\n## ZModes\n\n@docs ZMode, keep, none, replace, increment, decrement, invert,\n      incrementWrap, decrementWrap\n\n# Other settings\n\n@docs scissor, colorMask, dither, polygonOffset, sampleCoverage,\n      sampleAlphaToCoverage, cullFace\n\n## Face Modes\n\n@docs FaceMode, front, back, frontAndBack\n\n",
+    "aliases": [
+      {
+        "name": "BlendOptions",
+        "comment": " Defines options for the blend setting\n\n* `equation` specifies how source and destination color components are combined;\n* `source` specifies how the source blending factors are computed;\n* `destination` specifies how the destination blending factors are computed.\n\n`srcAlphaSaturate` blend factor should only be used for the source.\n\n`constantColor` and `constantAlpha` blend factors should not be used together\nfor `source` and `destination`.\n\n",
+        "args": [],
+        "type": "{ equation : WebGL.Settings.BlendEquation , source : WebGL.Settings.BlendFactor , destination : WebGL.Settings.BlendFactor }"
+      },
+      {
+        "name": "DepthOptions",
+        "comment": " Defines options for the depth setting:\n\n* `func` - a function that compares incoming pixel depth to the current\n  depth buffer value;\n* `mask` - enables the depth buffer for writing;\n* `near` - a mapping of the near clipping plane to window coordinates;\n* `far` - a mapping of the far clipping plane to window coordinates.\n",
+        "args": [],
+        "type": "{ func : WebGL.Settings.CompareMode , mask : Bool , near : Float , far : Float }"
+      },
+      {
+        "name": "StencilOptions",
+        "comment": " Defines options for the stencil setting:\n\n* `func` - the test function;\n* `ref` - the reference value for the stencil test, clamped to the range\n  0 to 2^n - 1, n is the number of bitplanes in the stencil buffer;\n* `valueMask` - bit-wise mask that is used to AND the reference value and\n  the stored stencil value when the test is done;\n* `fail` - the function to use when the stencil test fails;\n* `zfail` - the function to use when the stencil test passes, but the depth\n  test fails;\n* `zpass` - the function to use when both the stencil test and the depth test\n  pass, or when the stencil test passes and there is no depth buffer or depth\n  testing is disabled;\n* `writeMask` - a bit mask to enable or disable writing of individual bits in\n  the stencil plane.\n",
+        "args": [],
+        "type": "{ func : WebGL.Settings.CompareMode , ref : Int , valueMask : Int , fail : WebGL.Settings.ZMode , zfail : WebGL.Settings.ZMode , zpass : WebGL.Settings.ZMode , writeMask : Int }"
+      }
+    ],
+    "types": [
+      {
+        "name": "BlendEquation",
+        "comment": " Allows to specify how source and destination colors are combined\n",
+        "args": [],
+        "cases": []
+      },
+      {
+        "name": "BlendFactor",
+        "comment": " Allows you to define which blend factor to use.\n",
+        "args": [],
+        "cases": []
+      },
+      {
+        "name": "CompareMode",
+        "comment": " The `CompareMode` allows you to define how to compare the incoming value\nwith the depth buffer value, in order to set the conditions under which\nthe pixel will be drawn.\n",
+        "args": [],
+        "cases": []
+      },
+      {
+        "name": "FaceMode",
+        "comment": " The `FaceMode` defines the face of the polygon\n",
+        "args": [],
+        "cases": []
+      },
+      {
+        "name": "Setting",
+        "comment": " Provides a typesafe way to configure the rendering operation in\n`WebGL.renderWith`.\n",
+        "args": [],
+        "cases": []
+      },
+      {
+        "name": "ZMode",
+        "comment": " The `ZMode` type allows you to define what to do with the stencil buffer\nvalue.\n",
+        "args": [],
+        "cases": []
+      }
+    ],
+    "values": [
+      {
+        "name": "add",
+        "comment": " source + destination\n",
+        "type": "WebGL.Settings.BlendEquation"
+      },
+      {
+        "name": "always",
+        "comment": " Always pass.\n",
+        "type": "WebGL.Settings.CompareMode"
+      },
+      {
+        "name": "back",
+        "comment": " Targets the back-facing polygons.\n",
+        "type": "WebGL.Settings.FaceMode"
+      },
+      {
+        "name": "blend",
+        "comment": " Blend setting allows to control how the source and destination\ncolors are blended. Initiate it with `BlendOptions` and\nred, green, blue, alpha color components, that are from 0 to 1.\n",
+        "type": "WebGL.Settings.BlendOptions -> Float -> Float -> Float -> Float -> WebGL.Settings.Setting"
+      },
+      {
+        "name": "blendOptions",
+        "comment": " Defaut options for the blend setting.\n",
+        "type": "WebGL.Settings.BlendOptions"
+      },
+      {
+        "name": "blendSeparate",
+        "comment": " The same as blend setting, but allows to pass separate\nblend options for color channels and alpha channel\n",
+        "type": "WebGL.Settings.BlendOptions -> WebGL.Settings.BlendOptions -> Float -> Float -> Float -> Float -> WebGL.Settings.Setting"
+      },
+      {
+        "name": "colorMask",
+        "comment": " Specify whether or not each channel (red, green, blue, alpha)\nshould be written into the frame buffer.\n",
+        "type": "Bool -> Bool -> Bool -> Bool -> WebGL.Settings.Setting"
+      },
+      {
+        "name": "constantAlpha",
+        "comment": " Multiplies all colors by a constant alpha value.\n",
+        "type": "WebGL.Settings.BlendFactor"
+      },
+      {
+        "name": "constantColor",
+        "comment": " Multiplies all colors by a constant color.\n",
+        "type": "WebGL.Settings.BlendFactor"
+      },
+      {
+        "name": "cullFace",
+        "comment": " Cull polygons based on their winding in window coordinates. Polygons with\ncounter-clock-wise winding are front-facing.\n",
+        "type": "WebGL.Settings.FaceMode -> WebGL.Settings.Setting"
+      },
+      {
+        "name": "decrement",
+        "comment": " Decrements the current stencil buffer value. Clamps to 0.\n",
+        "type": "WebGL.Settings.ZMode"
+      },
+      {
+        "name": "decrementWrap",
+        "comment": " Decrements the current stencil buffer value.\nWraps stencil buffer value to the maximum representable unsigned\nvalue when decrementing a stencil buffer value of zero.\n",
+        "type": "WebGL.Settings.ZMode"
+      },
+      {
+        "name": "depth",
+        "comment": " Activates depth comparisons and updates to the depth buffer.\nInitiate it with DepthOptions.\n\n`depth depthOptions` is included for you when you use `WebGL.render`.\n",
+        "type": "WebGL.Settings.DepthOptions -> WebGL.Settings.Setting"
+      },
+      {
+        "name": "depthOptions",
+        "comment": " Defaut options for the depth setting.\n",
+        "type": "WebGL.Settings.DepthOptions"
+      },
+      {
+        "name": "dither",
+        "comment": " Dither color components or indices before they\nare written to the color buffer.\n",
+        "type": "WebGL.Settings.Setting"
+      },
+      {
+        "name": "dstAlpha",
+        "comment": " Multiplies all colors by the destination alpha value.\n",
+        "type": "WebGL.Settings.BlendFactor"
+      },
+      {
+        "name": "dstColor",
+        "comment": " Multiplies all colors by the destination color.\n",
+        "type": "WebGL.Settings.BlendFactor"
+      },
+      {
+        "name": "equal",
+        "comment": " Pass if the incoming value equals the the depth buffer value.\n",
+        "type": "WebGL.Settings.CompareMode"
+      },
+      {
+        "name": "front",
+        "comment": " Targets the front-facing polygons.\n",
+        "type": "WebGL.Settings.FaceMode"
+      },
+      {
+        "name": "frontAndBack",
+        "comment": " Targets both front- and back-facing polygons.\n",
+        "type": "WebGL.Settings.FaceMode"
+      },
+      {
+        "name": "greater",
+        "comment": " Pass if the incoming value is greater than the depth buffer value.\n",
+        "type": "WebGL.Settings.CompareMode"
+      },
+      {
+        "name": "greaterOrEqual",
+        "comment": " Pass if the incoming value is greater than or equal to the depth buffer\nvalue.\n",
+        "type": "WebGL.Settings.CompareMode"
+      },
+      {
+        "name": "increment",
+        "comment": " Increments the current stencil buffer value. Clamps to the maximum\nrepresentable unsigned value.\n",
+        "type": "WebGL.Settings.ZMode"
+      },
+      {
+        "name": "incrementWrap",
+        "comment": " Increments the current stencil buffer value. Wraps stencil buffer value to\nzero when incrementing the maximum representable unsigned value.\n",
+        "type": "WebGL.Settings.ZMode"
+      },
+      {
+        "name": "invert",
+        "comment": " Bitwise inverts the current stencil buffer value.\n",
+        "type": "WebGL.Settings.ZMode"
+      },
+      {
+        "name": "keep",
+        "comment": " Keeps the current value.\n",
+        "type": "WebGL.Settings.ZMode"
+      },
+      {
+        "name": "less",
+        "comment": " Pass if the incoming value is less than the depth buffer value.\n",
+        "type": "WebGL.Settings.CompareMode"
+      },
+      {
+        "name": "lessOrEqual",
+        "comment": " Pass if the incoming value is less than or equal to the depth buffer value.\n",
+        "type": "WebGL.Settings.CompareMode"
+      },
+      {
+        "name": "never",
+        "comment": " Never pass.\n",
+        "type": "WebGL.Settings.CompareMode"
+      },
+      {
+        "name": "none",
+        "comment": " Sets the stencil buffer value to 0. Should've been named `zero`,\naccording to specification, but was is taken.\n",
+        "type": "WebGL.Settings.ZMode"
+      },
+      {
+        "name": "notEqual",
+        "comment": " Pass if the incoming value is not equal to the depth buffer value.\n",
+        "type": "WebGL.Settings.CompareMode"
+      },
+      {
+        "name": "one",
+        "comment": " Multiplies all colors by 1.\n",
+        "type": "WebGL.Settings.BlendFactor"
+      },
+      {
+        "name": "oneMinusConstantAlpha",
+        "comment": " Multiplies all colors by 1 minus a constant alpha value.\n",
+        "type": "WebGL.Settings.BlendFactor"
+      },
+      {
+        "name": "oneMinusConstantColor",
+        "comment": " Multiplies all colors by 1 minus a constant color.\n",
+        "type": "WebGL.Settings.BlendFactor"
+      },
+      {
+        "name": "oneMinusDstAlpha",
+        "comment": " Multiplies all colors by 1 minus the destination alpha value.\n",
+        "type": "WebGL.Settings.BlendFactor"
+      },
+      {
+        "name": "oneMinusDstColor",
+        "comment": " Multiplies all colors by 1 minus each destination color.\n",
+        "type": "WebGL.Settings.BlendFactor"
+      },
+      {
+        "name": "oneMinusSrcAlpha",
+        "comment": " Multiplies all colors by 1 minus the source alpha value.\n",
+        "type": "WebGL.Settings.BlendFactor"
+      },
+      {
+        "name": "oneMinusSrcColor",
+        "comment": " Multiplies all colors by 1 minus each source color.\n",
+        "type": "WebGL.Settings.BlendFactor"
+      },
+      {
+        "name": "polygonOffset",
+        "comment": " Add an offset to depth values of a polygon's fragments produced by\nrasterization. The offset is added before the depth test is performed and\nbefore the value is written into the depth buffer.\n\n* the first argument is the scale factor for the variable depth offset for\n  each polygon;\n* the second argument is the multiplier by which an implementation-specific\n  value is multiplied\n  with to create a constant depth offset.\n",
+        "type": "Float -> Float -> WebGL.Settings.Setting"
+      },
+      {
+        "name": "replace",
+        "comment": " Sets the stencil buffer value to `ref` from the `stencilOptions`.\n",
+        "type": "WebGL.Settings.ZMode"
+      },
+      {
+        "name": "reverseSubtract",
+        "comment": " destination - source\n",
+        "type": "WebGL.Settings.BlendEquation"
+      },
+      {
+        "name": "sampleAlphaToCoverage",
+        "comment": " Compute a temporary coverage value, where each bit is determined by the\nalpha value at the corresponding sample location.\n\nThe temporary coverage value is then ANDed with the fragment coverage value.\n",
+        "type": "WebGL.Settings.Setting"
+      },
+      {
+        "name": "sampleCoverage",
+        "comment": " Specify multisample coverage parameters.\n\nThe fragment's coverage is ANDed with the temporary coverage value.\n\n* the first argument specifies sample coverage value, that is clamped to\n  the range 0 1;\n* the second argument represents if the coverage masks should be inverted.\n",
+        "type": "Float -> Bool -> WebGL.Settings.Setting"
+      },
+      {
+        "name": "scissor",
+        "comment": " Set the scissor box, which limits the drawing of fragments to the\nscreen to a specified rectangle.\n\nThe arguments are the coordinates of the lower left corner, width and height.\n\n",
+        "type": "Int -> Int -> Int -> Int -> WebGL.Settings.Setting"
+      },
+      {
+        "name": "srcAlpha",
+        "comment": " Multiplies all colors by the source alpha value.\n",
+        "type": "WebGL.Settings.BlendFactor"
+      },
+      {
+        "name": "srcAlphaSaturate",
+        "comment": " Multiplies the RGB colors by the smaller of either the source alpha value\nor the value of 1 minus the destination alpha value. The alpha value is\nmultiplied by 1.\n",
+        "type": "WebGL.Settings.BlendFactor"
+      },
+      {
+        "name": "srcColor",
+        "comment": " Multiplies all colors by the source colors.\n",
+        "type": "WebGL.Settings.BlendFactor"
+      },
+      {
+        "name": "stencil",
+        "comment": " Activates stencil testing and updates to the stencil buffer.\nInitiate it with StencilOptions.\n",
+        "type": "WebGL.Settings.StencilOptions -> WebGL.Settings.Setting"
+      },
+      {
+        "name": "stencilOptions",
+        "comment": " Defaut options for the stencil setting.\n",
+        "type": "WebGL.Settings.StencilOptions"
+      },
+      {
+        "name": "stencilSeparate",
+        "comment": " Separate settings for front- and back-facing polygons.\n",
+        "type": "WebGL.Settings.StencilOptions -> WebGL.Settings.StencilOptions -> WebGL.Settings.Setting"
+      },
+      {
+        "name": "subtract",
+        "comment": " source - destination\n",
+        "type": "WebGL.Settings.BlendEquation"
+      },
+      {
+        "name": "zero",
+        "comment": " Multiplies all colors by 0.\n",
+        "type": "WebGL.Settings.BlendFactor"
+      }
+    ],
+    "generated-with-elm-version": "0.18.0"
+  }
+]
