@@ -1,13 +1,19 @@
 [
   {
     "name": "WebGL.Texture",
-    "comment": " # Types\n@docs Texture, TextureFilter, Error\n\n# Loading Textures\n@docs load, loadWith, size\n",
+    "comment": " # Texture\n@docs Texture, load, Error, size\n\n# Custom Loading\n@docs loadWith, TextureOptions, textureOptions\n\n## Magnifying Filter\n@docs MagnifyingFilter, magnifyLinear, magnifyNearest\n\n## Minifying Filter\n@docs MinifyingFilter, minifyNearestMipmapLinear, minifyLinear, minifyNearest,\n      minifyNearestMipmapNearest, minifyLinearMipmapNearest,\n      minifyLinearMipmapLinear\n\n## Wrapping Texture\n@docs TextureWrap, repeat, clampToEdge, mirroredRepeat\n\n# Measuring\n@docs size\n",
     "aliases": [
       {
         "name": "Texture",
-        "comment": " Textures can be passed in `uniforms`, and used in the fragment shader.\nYou can created a texture with `load` or `loadWith`.\n",
+        "comment": " Textures can be passed in `uniforms`, and used in the fragment shader.\nYou can create a texture with `load` or `loadWith` and measure its dimesions\nwith `size`.\n",
         "args": [],
         "type": "WebGL.Texture"
+      },
+      {
+        "name": "TextureOptions",
+        "comment": " Possible options when loading a texture\n\n* `magnifyingFilter` - texture magnification filter,\n  the default is `magnifyLinear`;\n* `minifyingFilter` - texture minification filter,\n  the default is `minifyNearestMipmapLinear`;\n* `horizontalWrap` - wrapping function for texture coordinate s,\n  the default is `repeat`;\n* `verticalWrap` - wrapping function for texture coordinate t,\n  the default is `repeat`;\n* `flipY` - flip the Y axis of the texture so it has the same direction\n  as in the clip-space, i.e. pointing up. The default is `True`.\n\nYou can read more about these parameters in the\n[specification](https://www.khronos.org/opengles/sdk/docs/man/xhtml/glTexParameter.xml).\n",
+        "args": [],
+        "type": "{ magnifyingFilter : WebGL.Texture.MagnifyingFilter , minifyingFilter : WebGL.Texture.MinifyingFilter , horizontalWrap : WebGL.Texture.TextureWrap , verticalWrap : WebGL.Texture.TextureWrap , flipY : Bool }"
       }
     ],
     "types": [
@@ -18,43 +24,106 @@
         "cases": []
       },
       {
-        "name": "TextureFilter",
-        "comment": " Textures work in two ways when looking up a pixel value: Linear or Nearest.\n",
+        "name": "MagnifyingFilter",
+        "comment": " The texture magnification filter is used when the pixel being textured\nmaps to an area less than or equal to one texture element.\n",
         "args": [],
-        "cases": [
-          [
-            "Linear",
-            []
-          ],
-          [
-            "Nearest",
-            []
-          ]
-        ]
+        "cases": []
+      },
+      {
+        "name": "MinifyingFilter",
+        "comment": " The texture minifying filter is used whenever the pixel being\ntextured maps to an area greater than one texture element.\n",
+        "args": [],
+        "cases": []
+      },
+      {
+        "name": "TextureWrap",
+        "comment": " Sets the wrap parameter for texture coordinate.\n",
+        "args": [],
+        "cases": []
       }
     ],
     "values": [
       {
+        "name": "clampToEdge",
+        "comment": " Causes coordinates to be clamped to the range 1 2N 1 - 1 2N, where N is\nthe size of the texture in the direction of clamping.\n",
+        "type": "WebGL.Texture.TextureWrap"
+      },
+      {
         "name": "load",
-        "comment": " Loads a texture from the given url with Linear filtering.\nPNG and JPEG are known to work, but other formats have not been as\nwell-tested yet.\n",
+        "comment": " Loads a texture from the given url with default options.\nPNG and JPEG are known to work, but other formats have not been as\nwell-tested yet.\n\nThe Y axis of the texture is flipped automatically for you, so it has\nthe same direction as in the clip-space, i.e. pointing up.\n\nIf you need to change flipping, wrapping or filtering, you can use `loadWith`.\n",
         "type": "String -> Task.Task WebGL.Texture.Error WebGL.Texture.Texture"
       },
       {
         "name": "loadWith",
-        "comment": " Loads a texture from the given url. PNG and JPEG are known to work, but\nother formats have not been as well-tested yet. Configurable filter.\n",
-        "type": "WebGL.Texture.TextureFilter -> String -> Task.Task WebGL.Texture.Error WebGL.Texture.Texture"
+        "comment": " Same as load, but allows to set options.\n",
+        "type": "WebGL.Texture.TextureOptions -> String -> Task.Task WebGL.Texture.Error WebGL.Texture.Texture"
+      },
+      {
+        "name": "magnifyLinear",
+        "comment": " Returns the weighted average of the four texture elements that are closest\nto the center of the pixel being textured. This is the default value of\nmagnifying filter.\n",
+        "type": "WebGL.Texture.MagnifyingFilter"
+      },
+      {
+        "name": "magnifyNearest",
+        "comment": " Returns the value of the texture element that is nearest (in Manhattan\ndistance) to the center of the pixel being textured.\n",
+        "type": "WebGL.Texture.MagnifyingFilter"
+      },
+      {
+        "name": "minifyLinear",
+        "comment": " Returns the weighted average of the four texture elements that are closest\nto the center of the pixel being textured.\n",
+        "type": "WebGL.Texture.MinifyingFilter"
+      },
+      {
+        "name": "minifyLinearMipmapLinear",
+        "comment": " Chooses the two mipmaps that most closely match the size of the pixel being\ntextured and uses the `linear` criterion (a weighted average of the four\ntexture elements that are closest to the center of the pixel) to produce a\ntexture value from each mipmap. The final texture value is a weighted average\nof those two values.\n",
+        "type": "WebGL.Texture.MinifyingFilter"
+      },
+      {
+        "name": "minifyLinearMipmapNearest",
+        "comment": " Chooses the mipmap that most closely matches the size of the pixel being\ntextured and uses the `linear` criterion (a weighted average of the four\ntexture elements that are closest to the center of the pixel) to produce a\ntexture value.\n",
+        "type": "WebGL.Texture.MinifyingFilter"
+      },
+      {
+        "name": "minifyNearest",
+        "comment": " Returns the value of the texture element that is nearest\n(in Manhattan distance) to the center of the pixel being textured.\n",
+        "type": "WebGL.Texture.MinifyingFilter"
+      },
+      {
+        "name": "minifyNearestMipmapLinear",
+        "comment": " Chooses the two mipmaps that most closely match the size of the pixel being\ntextured and uses the `nearest` criterion (the texture element nearest to the\ncenter of the pixel) to produce a texture value from each mipmap. The final\ntexture value is a weighted average of those two values.\n",
+        "type": "WebGL.Texture.MinifyingFilter"
+      },
+      {
+        "name": "minifyNearestMipmapNearest",
+        "comment": " Chooses the mipmap that most closely matches the size of the pixel being\ntextured and uses the `nearest` criterion (the texture element nearest to\nthe center of the pixel) to produce a texture value.\n\nA mipmap is an ordered set of arrays representing the same image at\nprogressively lower resolutions.\n\nThis is the default value of the minifying filter.\n",
+        "type": "WebGL.Texture.MinifyingFilter"
+      },
+      {
+        "name": "mirroredRepeat",
+        "comment": " Causes the coordinate c to be set to the fractional part of the texture\ncoordinate if the integer part is even; if the integer part is odd, then\nthe coordinate is set to 1 - frac, where frac represents the fractional part\nof the coordinate.\n",
+        "type": "WebGL.Texture.TextureWrap"
+      },
+      {
+        "name": "repeat",
+        "comment": " Causes the integer part of the coordinate to be ignored. This is the\ndefault value for both texture axis.\n",
+        "type": "WebGL.Texture.TextureWrap"
       },
       {
         "name": "size",
         "comment": " Return the (width, height) size of a texture. Useful for sprite sheets\nor other times you may want to use only a potion of a texture image.\n",
         "type": "WebGL.Texture.Texture -> ( Int, Int )"
+      },
+      {
+        "name": "textureOptions",
+        "comment": " Default options for texture loading.\n",
+        "type": "WebGL.Texture.TextureOptions"
       }
     ],
     "generated-with-elm-version": "0.18.0"
   },
   {
     "name": "WebGL",
-    "comment": " The WebGL API is for high performance rendering. Definitely read about\n[how WebGL works](https://github.com/elm-community/webgl/blob/master/README.md)\nand look at some examples before trying to do too much with just the\ndocumentation provided here.\n\n# Mesh\n@docs Drawable, triangles\n\nPlease find other kinds of drawables in the [corresponding section](#drawables).\n\n# Shaders\n@docs Shader, Texture\n\n# Renderables\n@docs Renderable, render\n\n# WebGL Html\n@docs toHtml\n\n# Advanced Usage\n@docs renderWith, toHtmlWith\n\n# Other Drawables\n@docs indexedTriangles, lines, lineStrip, lineLoop, points, triangleFan,\n      triangleStrip\n\n# Unsafe Shader Creation (for library writers)\n@docs unsafeShader\n",
+    "comment": " The WebGL API is for high performance rendering. Definitely read about\n[how WebGL works](https://github.com/elm-community/webgl/blob/master/README.md)\nand look at some examples before trying to do too much with just the\ndocumentation provided here.\n\n# Mesh\n@docs Drawable, triangles\n\nFind other kinds of drawables in the [corresponding section](#drawables).\n\n# Shaders\n@docs Shader, Texture\n\n# Renderables\n@docs Renderable, render\n\n# WebGL Html\n@docs toHtml\n\n# Advanced Usage\n@docs renderWith, toHtmlWith\n\n# Other Drawables\n@docs indexedTriangles, lines, lineStrip, lineLoop, points, triangleFan,\n      triangleStrip\n\n# Unsafe Shader Creation (for library writers)\n@docs unsafeShader\n",
     "aliases": [],
     "types": [
       {
@@ -83,7 +152,7 @@
       },
       {
         "name": "Texture",
-        "comment": " Use Texture to pass the sampler2D uniform value to the shader. Please\nfind more about textures in `WebGL.Texture`.\n",
+        "comment": " Use Texture to pass the sampler2D uniform value to the shader. Find\nmore about textures in `WebGL.Texture`.\n",
         "args": [],
         "cases": []
       }
@@ -126,12 +195,12 @@
       },
       {
         "name": "toHtml",
-        "comment": " Render a WebGL scene with the given options, html attributes, and\nrenderables.\n\nShaders and meshes are cached so that they do not get resent to the GPU,\nso it should be relatively cheap to create new renderables out of existing\nvalues.\n\nBy default, alpha channel with premultiplied alpha, antialias and depth buffer\noptions are enabled. If you need more options, please check `toHtmlWith`.\n",
+        "comment": " Render a WebGL scene with the given options, html attributes, and\nrenderables.\n\nShaders and meshes are cached so that they do not get resent to the GPU,\nso it should be relatively cheap to create new renderables out of existing\nvalues.\n\nBy default, alpha channel with premultiplied alpha, antialias and depth buffer\noptions are enabled. Use `toHtmlWith` for custom options.\n",
         "type": "List (Html.Attribute msg) -> List WebGL.Renderable -> Html.Html msg"
       },
       {
         "name": "toHtmlWith",
-        "comment": " Render a WebGL scene with the given list of options,\nhtml attributes, and renderables.\n\nPlease note that due to browser limitations, options will be applied only once\nwhen the canvas is created for the first time.\n\nCheck `WebGL.Options` for all possible options.\n",
+        "comment": " Render a WebGL scene with the given list of options,\nhtml attributes, and renderables.\n\nDue to browser limitations, options will be applied only once,\nwhen the canvas is created for the first time.\n\nCheck `WebGL.Options` for all possible options.\n",
         "type": "List WebGL.Options.Option -> List (Html.Attribute msg) -> List WebGL.Renderable -> Html.Html msg"
       },
       {
@@ -204,19 +273,19 @@
     "aliases": [
       {
         "name": "BlendOptions",
-        "comment": " Defines options for the blend setting\n\n* `equation` specifies how source and destination color components are combined;\n* `source` specifies how the source blending factors are computed;\n* `destination` specifies how the destination blending factors are computed.\n\n`srcAlphaSaturate` blend factor should only be used for the source.\n\n`constantColor` and `constantAlpha` blend factors should not be used together\nfor `source` and `destination`.\n\n",
+        "comment": " Defines options for the blend setting\n\n* `equation` specifies how source and destination color components are combined,\n  the default is `add`;\n* `source` specifies how the source blending factors are computed, the default\n  is `one`;\n* `destination` specifies how the destination blending factors are computed,\n  the default is `zero`.\n\n`srcAlphaSaturate` blend factor should only be used for the source.\n\n`constantColor` and `constantAlpha` blend factors should not be used together\nfor `source` and `destination`.\n\n",
         "args": [],
         "type": "{ equation : WebGL.Settings.BlendEquation , source : WebGL.Settings.BlendFactor , destination : WebGL.Settings.BlendFactor }"
       },
       {
         "name": "DepthOptions",
-        "comment": " Defines options for the depth setting:\n\n* `func` - a function that compares incoming pixel depth to the current\n  depth buffer value;\n* `mask` - enables the depth buffer for writing;\n* `near` - a mapping of the near clipping plane to window coordinates;\n* `far` - a mapping of the far clipping plane to window coordinates.\n",
+        "comment": " Defines options for the depth setting:\n\n* `func` - a function that compares incoming pixel depth to the current\n  depth buffer value, the default is `less`;\n* `mask` - enables the depth buffer for writing, the default is `True`;\n* `near` - a mapping of the near clipping plane to window coordinates,\n  [read more here](https://www.khronos.org/opengles/sdk/docs/man/xhtml/glDepthRangef.xml).\n  The default is 0;\n* `far` - a mapping of the far clipping plane to window coordinates, the default\n  is 1.\n",
         "args": [],
         "type": "{ func : WebGL.Settings.CompareMode , mask : Bool , near : Float , far : Float }"
       },
       {
         "name": "StencilOptions",
-        "comment": " Defines options for the stencil setting:\n\n* `func` - the test function;\n* `ref` - the reference value for the stencil test, clamped to the range\n  0 to 2^n - 1, n is the number of bitplanes in the stencil buffer;\n* `valueMask` - bit-wise mask that is used to AND the reference value and\n  the stored stencil value when the test is done;\n* `fail` - the function to use when the stencil test fails;\n* `zfail` - the function to use when the stencil test passes, but the depth\n  test fails;\n* `zpass` - the function to use when both the stencil test and the depth test\n  pass, or when the stencil test passes and there is no depth buffer or depth\n  testing is disabled;\n* `writeMask` - a bit mask to enable or disable writing of individual bits in\n  the stencil plane.\n",
+        "comment": " Defines options for the stencil setting:\n\n* `func` - the test function, the default is `always`;\n* `ref` - the reference value for the stencil test, clamped to the range\n  0 to 2^n - 1, n is the number of bitplanes in the stencil buffer, the\n  default is 0;\n* `valueMask` - bit-wise mask that is used to AND the reference value and\n  the stored stencil value when the test is done, the default is all 1's;\n* `fail` - the function to use when the stencil test fails, the default\n  is `keep`;\n* `zfail` - the function to use when the stencil test passes, but the depth\n  test fails, the default is `keep`;\n* `zpass` - the function to use when both the stencil test and the depth test\n  pass, or when the stencil test passes and there is no depth buffer or depth\n  testing is disabled, the default is `keep`;\n* `writeMask` - a bit mask to enable or disable writing of individual bits in\n  the stencil plane, the default is all 1's.\n",
         "args": [],
         "type": "{ func : WebGL.Settings.CompareMode , ref : Int , valueMask : Int , fail : WebGL.Settings.ZMode , zfail : WebGL.Settings.ZMode , zpass : WebGL.Settings.ZMode , writeMask : Int }"
       }
@@ -242,7 +311,7 @@
       },
       {
         "name": "FaceMode",
-        "comment": " The `FaceMode` defines the face of the polygon\n",
+        "comment": " The `FaceMode` defines the face of the polygon.\n",
         "args": [],
         "cases": []
       },
@@ -307,7 +376,7 @@
       },
       {
         "name": "cullFace",
-        "comment": " Cull polygons based on their winding in window coordinates. Polygons with\ncounter-clock-wise winding are front-facing.\n",
+        "comment": " Excludes polygons based on winding (the order of the vertices) in window\ncoordinates. Polygons with counter-clock-wise winding are front-facing.\n",
         "type": "WebGL.Settings.FaceMode -> WebGL.Settings.Setting"
       },
       {
@@ -322,7 +391,7 @@
       },
       {
         "name": "depth",
-        "comment": " Activates depth comparisons and updates to the depth buffer.\nInitiate it with DepthOptions.\n\n`depth depthOptions` is included for you when you use `WebGL.render`.\n",
+        "comment": " Activates depth comparisons and updates to the depth buffer.\n\n`depth depthOptions` is included for you when you use `WebGL.render`.\n",
         "type": "WebGL.Settings.DepthOptions -> WebGL.Settings.Setting"
       },
       {
@@ -407,7 +476,7 @@
       },
       {
         "name": "none",
-        "comment": " Sets the stencil buffer value to 0. Should've been named `zero`,\naccording to specification, but was is taken.\n",
+        "comment": " Sets the stencil buffer value to 0. Should've been named `zero`,\naccording to specification, but it was taken.\n",
         "type": "WebGL.Settings.ZMode"
       },
       {
@@ -497,7 +566,7 @@
       },
       {
         "name": "stencil",
-        "comment": " Activates stencil testing and updates to the stencil buffer.\nInitiate it with StencilOptions.\n",
+        "comment": " Activates stencil testing and updates to the stencil buffer.\n",
         "type": "WebGL.Settings.StencilOptions -> WebGL.Settings.Setting"
       },
       {
